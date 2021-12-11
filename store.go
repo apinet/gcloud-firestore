@@ -86,6 +86,7 @@ type DocumentRef interface {
 	Collection(name string) CollectionRef
 	Get(dst interface{}) (bool, error)
 	Set(dst interface{}) error
+	Merge(dst interface{}) error
 	Update(patch []firestore.Update) error
 	Delete() error
 	Path() []string
@@ -111,6 +112,11 @@ func (d *DocumentRefImpl) Path() []string {
 
 func (d *DocumentRefImpl) Set(src interface{}) error {
 	_, err := d.docRef.Set(d.ctx, src)
+	return err
+}
+
+func (d *DocumentRefImpl) Merge(src interface{}) error {
+	_, err := d.docRef.Set(d.ctx, src, firestore.MergeAll)
 	return err
 }
 
@@ -141,6 +147,7 @@ func (d *DocumentRefImpl) Get(dst interface{}) (bool, error) {
 
 type Batch interface {
 	Set(ref DocumentRef, src interface{})
+	Merge(ref DocumentRef, src interface{})
 	Update(ref DocumentRef, patch []firestore.Update)
 	Commit() error
 }
@@ -154,6 +161,11 @@ type BatchImpl struct {
 func (b *BatchImpl) Set(ref DocumentRef, src interface{}) {
 	documentRef := toFirestoreDocRef(*b.client, ref)
 	b.writeBatch.Set(documentRef, src)
+}
+
+func (b *BatchImpl) Merge(ref DocumentRef, src interface{}) {
+	documentRef := toFirestoreDocRef(*b.client, ref)
+	b.writeBatch.Set(documentRef, src, firestore.MergeAll)
 }
 
 func (b *BatchImpl) Update(ref DocumentRef, patch []firestore.Update) {

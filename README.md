@@ -1,6 +1,6 @@
 # gcloud-firestore
 
-Firestore (gcloud) wrapper with mocking capabilities for golang cloud functions
+Firestore (gcloud) wrapper with mocking capabilities for golang cloud functions.
 
 ## usage
 

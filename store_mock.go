@@ -149,13 +149,23 @@ func (d *DocumentRefMock) Set(dst interface{}) error {
 	return nil
 }
 
+// TODO: MERGE FOR REAL
+func (d *DocumentRefMock) Merge(dst interface{}) error {
+	if d.storeMock.failsOnSet[strings.Join(d.Path(), "/")] {
+		return errors.New("fails on set")
+	}
+
+	d.docNode.data = dst
+	return nil
+}
+
 func (d *DocumentRefMock) Update(patch []firestore.Update) error {
 	if d.storeMock.failsOnUpd[strings.Join(d.Path(), "/")] {
 		return errors.New("fails on update")
 	}
 
 	if d.docNode.data == nil {
-		return nil
+		return errors.New("doesn't exist")
 	}
 
 	for _, p := range patch {
@@ -208,6 +218,14 @@ func (b *BatchMock) Set(ref DocumentRef, src interface{}) {
 	})
 }
 
+func (b *BatchMock) Merge(ref DocumentRef, src interface{}) {
+	b.elements = append(b.elements, &BatchElement{
+		docRef: ref,
+		method: "merge",
+		data:   src,
+	})
+}
+
 func (b *BatchMock) Update(ref DocumentRef, patch []firestore.Update) {
 	b.elements = append(b.elements, &BatchElement{
 		docRef: ref,
@@ -224,6 +242,8 @@ func (b *BatchMock) Commit() error {
 			el.docRef.Set(el.data)
 		case "update":
 			el.docRef.Update(el.patch)
+		case "merge":
+			el.docRef.Merge(el.data)
 
 		}
 	}
